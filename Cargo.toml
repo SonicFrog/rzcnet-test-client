@@ -1,0 +1,11 @@
+[package]
+name = "dummy_client"
+version = "0.1.0"
+authors = ["Ogier Bouvier <ars3nic@ars3nic.ch>"]
+edition = "2018"
+
+[dependencies]
+error-chain = "*"
+netif = { path = "../netif", features = ["client"] }
+pretty_env_logger = "*"
+log = "*"
