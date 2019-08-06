@@ -6,6 +6,6 @@ edition = "2018"
 
 [dependencies]
 error-chain = "*"
-netif = { path = "../netif", features = ["client"] }
+netif = { path = "../netif" }
 pretty_env_logger = "*"
 log = "*"

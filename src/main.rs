@@ -5,7 +5,7 @@ use std::net::Ipv4Addr;
 
 use log::{error, debug};
 
-use netif::{Runnable, ShmPacket, UdpSocket, Socket};
+use netif::{Runnable, ShmPacket, Socket};
 use netif::client::AppContext;
 
 type Addr = (Ipv4Addr, u16);
@@ -21,7 +21,8 @@ fn main() -> Result<()> {
 
     debug!("starting up...");
 
-    let cb = move |sock: &mut UdpSocket, pkts: &[ShmPacket], addr, port| {
+    let cb = move |sock: &dyn Socket<Addr>, pkts: &[ShmPacket], addr| {
+        let (addr, port) = addr;
         debug!("processing batch of {} packets from {}:{}", pkts.len(), addr, port);
 
         if let Err(e) = sock.send_to(pkts, (addr, port)) {
