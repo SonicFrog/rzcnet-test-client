@@ -2,11 +2,12 @@
 extern crate error_chain;
 
 use std::net::Ipv4Addr;
+use std::sync::Arc;
 
-use log::{error, debug};
+use log::{debug, error};
 
-use netif::{Runnable, ShmPacket, Socket};
 use netif::client::AppContext;
+use netif::{Runnable, ShmPacket, Socket};
 
 type Addr = (Ipv4Addr, u16);
 
@@ -21,17 +22,24 @@ fn main() -> Result<()> {
 
     debug!("starting up...");
 
-    let cb = move |sock: &dyn Socket<Addr>, pkts: &[ShmPacket], addr| {
+    let cb = move |_env: &(), sock: &dyn Socket<Addr, ()>, pkts: &[ShmPacket], addr| {
         let (addr, port) = addr;
-        debug!("processing batch of {} packets from {}:{}", pkts.len(), addr, port);
+        debug!(
+            "processing batch of {} packets from {}:{}",
+            pkts.len(),
+            addr,
+            port
+        );
 
-        if let Err(e) = sock.send_to(pkts, (addr, port)) {
+        let mut iter = pkts.iter().map(|x| x.into());
+
+        if let Err(e) = sock.send_to(&mut iter, (addr, port)) {
             error!("failed to echo packets: {}", e);
         }
     };
 
-    let mut ctx = AppContext::new()?;
-    let handle = ctx.bind("127.0.0.1".parse().unwrap(), 9090, cb)?;
+    let mut ctx = AppContext::new_with_names(netif::SOCK_PATH, 1, ())?;
+    let handle = ctx.bind("127.0.0.1".parse().unwrap(), 9090, Arc::new(cb))?;
 
     debug!("bound socket with handle {}", handle);
 
